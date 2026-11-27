@@ -52,10 +52,17 @@ compose() {
 }
 
 mkdir -p "$project_dir" "$EMBY_VOLUME_ROOT/config" "$EMBY_VOLUME_ROOT/cache" \
-    "$EMBY_VOLUME_ROOT/media/drive" "$project_dir/site/about" "$project_dir/site/privacy"
+    "$EMBY_VOLUME_ROOT/media" "$project_dir/site/about" "$project_dir/site/privacy"
 docker network inspect proxy-network >/dev/null
 compose -f "$source_root/docker-compose.yml" config --quiet
 compose -f "$source_root/docker-compose.yml" pull
+
+# The Jenkins workspace may still see a previous FUSE mount after rclone rotates.
+# Check the live host path from a container started by the Docker daemon.
+rclone_image=$(compose -f "$source_root/docker-compose.yml" config --images rclone)
+docker run --rm --network none \
+    --mount "type=bind,src=$EMBY_VOLUME_ROOT/media,dst=/media" \
+    --entrypoint /bin/sh "$rclone_image" -ec 'mkdir -p /media/drive'
 
 previous=$(mktemp "$project_dir/.compose-previous.XXXXXX")
 candidate=$(mktemp "$project_dir/.compose-candidate.XXXXXX")
