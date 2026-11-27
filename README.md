@@ -8,6 +8,7 @@ Emby Server com a biblioteca do Google Drive montada em modo somente leitura pel
 - A branch `dev` implanta o projeto `emby-server-dev`, com loopback em `127.0.0.1:8097`.
 - Os projetos usam diretórios de configuração, mídia montada e cache próprios em `/root/projects/volumes/<projeto>`.
 - O Nginx Proxy Manager alcança os serviços pela rede externa `proxy-network`. Os aliases de produção são `emby-server:8096` e `emby-pages:80`. Em DEV, são `emby-server-dev:8096` e `emby-pages-dev:80`.
+- A produção usa `emby.henriquebuz.in`. O endereço `emby-dev.henriquebuz.in` é reservado para o acesso pela VPN.
 
 ## Configuração na VPS
 
