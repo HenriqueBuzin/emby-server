@@ -52,7 +52,7 @@ compose() {
 }
 
 mkdir -p "$project_dir" "$EMBY_VOLUME_ROOT/config" "$EMBY_VOLUME_ROOT/cache" \
-    "$EMBY_VOLUME_ROOT/media" "$project_dir/site/about" "$project_dir/site/privacy"
+    "$EMBY_VOLUME_ROOT/media/drive" "$project_dir/site/about" "$project_dir/site/privacy"
 docker network inspect proxy-network >/dev/null
 compose -f "$source_root/docker-compose.yml" config --quiet
 compose -f "$source_root/docker-compose.yml" pull
@@ -71,6 +71,7 @@ install -m 0644 "$source_root/docker-compose.yml" "$candidate"
 mv -f -- "$candidate" "$compose_file"
 
 if ! compose -f "$compose_file" up -d --wait --wait-timeout 180; then
+    compose -f "$compose_file" ps --all --format 'table {{.Name}}\t{{.State}}\t{{.Health}}' || true
     if [ -s "$previous" ]; then
         cp -p -- "$previous" "$compose_file"
         compose -f "$compose_file" up -d --wait --wait-timeout 180

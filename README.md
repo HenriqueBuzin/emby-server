@@ -15,7 +15,7 @@ Crie o env a partir de `.env.example` no diretório do ambiente. Produção usa 
 
 Coloque o `rclone.conf` em `secrets/rclone.conf` no mesmo diretório. O arquivo deve conter o remoto especificado em `RCLONE_REMOTE`, com escopo de leitura do Drive. Preencha `RCLONE_DRIVE_ROOT_FOLDER_ID` com a pasta do ambiente. O rclone usa a montagem gravável da pasta de configuração para persistir a renovação do token OAuth.
 
-O script de deploy cria o link simbólico `.env` no diretório do projeto, verifica o Compose e aguarda a montagem do Drive e o HTTP do Emby. A VPS precisa ter `/dev/fuse` e a rede Docker `proxy-network` prontos.
+O script de deploy cria o link simbólico `.env` e o ponto de montagem `media/drive`, verifica o Compose e aguarda a montagem do Drive e o HTTP do Emby. A VPS precisa ter `/dev/fuse`, a rede Docker `proxy-network` e a propagação compartilhada no diretório `media` de cada ambiente.
 
 ## Jenkins
 
