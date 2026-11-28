@@ -33,10 +33,8 @@ export EMBY_VOLUME_ROOT="$project_root/volumes/$project"
 export EMBY_PROXY_ALIAS="$project"
 export EMBY_PAGES_ALIAS="$pages"
 export EMBY_LOOPBACK_PORT="$port"
-export RCLONE_CONFIG_DIR="$env_dir/secrets"
-
-if [ ! -r "$env_file" ] || [ ! -s "$RCLONE_CONFIG_DIR/rclone.conf" ]; then
-    echo "Configure o env e o arquivo rclone.conf de $environment em $env_dir." >&2
+if [ ! -r "$env_file" ]; then
+    echo "Configure o env de $environment em $env_dir." >&2
     exit 1
 fi
 if [ -e "$env_link" ] || [ -L "$env_link" ]; then
@@ -51,18 +49,22 @@ compose() {
         --env-file "$env_file" "$@"
 }
 
-mkdir -p "$project_dir" "$EMBY_VOLUME_ROOT/config" "$EMBY_VOLUME_ROOT/cache" \
-    "$EMBY_VOLUME_ROOT/media" "$project_dir/site/about" "$project_dir/site/privacy"
+mkdir -p "$project_dir" "$EMBY_VOLUME_ROOT/config" \
+    "$project_dir/site/about" "$project_dir/site/privacy"
 docker network inspect proxy-network >/dev/null
 compose -f "$source_root/docker-compose.yml" config --quiet
 compose -f "$source_root/docker-compose.yml" pull
 
-# The Jenkins workspace may still see a previous FUSE mount after rclone rotates.
-# Check the live host path from a container started by the Docker daemon.
-rclone_image=$(compose -f "$source_root/docker-compose.yml" config --images rclone)
-docker run --rm --network none \
-    --mount "type=bind,src=$EMBY_VOLUME_ROOT/media,dst=/media" \
-    --entrypoint /bin/sh "$rclone_image" -ec 'mkdir -p /media/drive'
+# Check the running rclone mount from the Docker host namespace.
+emby_image=$(compose -f "$source_root/docker-compose.yml" config --images emby)
+media_root=$(compose -f "$source_root/docker-compose.yml" config --format json |
+    python3 -c 'import json,sys; print(next(v["source"] for v in json.load(sys.stdin)["services"]["emby"]["volumes"] if v["target"] == "/media"))')
+if ! docker run --rm --network none \
+    --mount "type=bind,src=$media_root,dst=/media,readonly,bind-propagation=rslave" \
+    --entrypoint /bin/sh "$emby_image" -ec 'grep -qs " /media/drive fuse.rclone " /proc/mounts'; then
+    echo 'A montagem compartilhada do rclone precisa estar ativa antes do deploy.' >&2
+    exit 1
+fi
 
 previous=$(mktemp "$project_dir/.compose-previous.XXXXXX")
 candidate=$(mktemp "$project_dir/.compose-candidate.XXXXXX")

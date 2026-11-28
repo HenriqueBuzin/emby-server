@@ -6,17 +6,17 @@ Emby Server com a biblioteca do Google Drive montada em modo somente leitura pel
 
 - A branch `main` implanta o projeto `emby-server`, com as portas de recuperação acessíveis pelo loopback em `127.0.0.1:8096`.
 - A branch `dev` implanta o projeto `emby-server-dev`, com loopback em `127.0.0.1:8097`.
-- Os projetos usam diretórios de configuração, mídia montada e cache próprios em `/root/projects/volumes/<projeto>`.
+- Cada ambiente guarda sua configuração em `/root/projects/volumes/<projeto>/config`. Ambos leem a mesma montagem de mídia em `/media/drive`.
 - O Nginx Proxy Manager alcança os serviços pela rede externa `proxy-network`. Os aliases de produção são `emby-server:8096` e `emby-pages:80`. Em DEV, são `emby-server-dev:8096` e `emby-pages-dev:80`.
-- A produção usa `emby.henriquebuz.in`. O endereço `emby-dev.henriquebuz.in` é reservado para o acesso pela VPN.
+- A produção usa `emby.henriquebuz.in` e o DEV usa `emby-dev.henriquebuz.in`. Ambos exigem login para acessar a biblioteca.
 
 ## Configuração na VPS
 
 Crie o env a partir de `.env.example` no diretório do ambiente. Produção usa `/root/projects/envs/emby-server/prod/emby-server-prod.env` e DEV usa `/root/projects/envs/emby-server/dev/emby-server-dev.env`.
 
-Coloque o `rclone.conf` em `secrets/rclone.conf` no mesmo diretório. O arquivo deve conter o remoto especificado em `RCLONE_REMOTE`, com escopo de leitura do Drive. Preencha `RCLONE_DRIVE_ROOT_FOLDER_ID` com a pasta do ambiente. O rclone usa a montagem gravável da pasta de configuração para persistir a renovação do token OAuth.
+O Docker Compose em `/root/shared-services/rclone` fornece uma montagem compartilhada do Drive em modo somente leitura. A unidade `emby-media-mount.service` prepara a propagação antes do Docker. O arquivo `rclone.conf` fica em `/root/shared-services/rclone/secrets`, com permissão de gravação para renovar o token OAuth. A configuração faz parte do backup, e os diretórios de mídia e cache são excluídos.
 
-O script de deploy cria o link simbólico `.env` e o ponto de montagem `media/drive`, verifica o Compose e aguarda a montagem do Drive e o HTTP do Emby. A VPS precisa ter `/dev/fuse`, a rede Docker `proxy-network` e a propagação compartilhada no diretório `media` de cada ambiente.
+O script de deploy verifica se o Drive já está montado em `/root/shared-services/volumes/rclone/media/drive` antes de aplicar o Compose. O Emby também espera que o FUSE apareça em `/media/drive` durante a inicialização. A VPS precisa da rede Docker `proxy-network`.
 
 ## Jenkins
 
