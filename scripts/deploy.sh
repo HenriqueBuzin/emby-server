@@ -21,7 +21,7 @@ case "${1:-}" in
 esac
 
 source_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-project_root=/root/projects
+project_root=/srv/vps/projects
 project_dir="$project_root/$project"
 env_dir="$project_root/envs/emby-server/$environment"
 env_file="$env_dir/emby-server-$environment.env"

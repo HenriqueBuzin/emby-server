@@ -30,7 +30,7 @@ services:
     volumes:
       - ${EMBY_VOLUME_ROOT:?Defina EMBY_VOLUME_ROOT}/config:/config
       - type: bind
-        source: ${EMBY_MEDIA_ROOT:-/root/shared-services/volumes/rclone/media}
+        source: ${EMBY_MEDIA_ROOT:-/srv/vps/shared-services/volumes/rclone/media}
         target: /media
         read_only: true
         bind:
